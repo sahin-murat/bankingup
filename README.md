@@ -1,23 +1,29 @@
 # bankingup
 A Golang banking API built wih Fiber.
 
-## Docker
+## Run with Compose
 
-Build and run the service:
-
-```sh
-docker build -t banking-up .
-docker run --rm -p 8080:8080 banking-up
-```
-
-## Podman
-
-As an alternative to Docker, build and run the same container with Podman:
+Start the gateway and PostgreSQL with Docker or Podman:
 
 ```sh
-podman build -t banking-up .
-podman run --rm -p 8080:8080 banking-up
+docker compose up --build
+# or
+podman compose up --build
 ```
+
+Stop the services with:
+
+```sh
+docker compose down
+# or
+podman compose down
+```
+
+The gateway runs at `http://localhost:8080`. Use `GET /health` for liveness
+and `GET /health/ready` for database readiness. PostgreSQL is exposed on port
+`5432` and stores its data in the `postgres-data` volume.
+
+Override the default ports with `APP_PORT` and `POSTGRES_PORT`.
 
 ## Postman
 

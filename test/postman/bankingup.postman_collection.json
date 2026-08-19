@@ -43,6 +43,42 @@
         "description": "Checks whether the gateway is running."
       },
       "response": []
+    },
+    {
+      "name": "Readiness",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"returns HTTP 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"reports the database as available\", function () {",
+              "    pm.expect(pm.response.json()).to.eql({ status: \"ok\", database: \"up\" });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health/ready",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health",
+            "ready"
+          ]
+        },
+        "description": "Checks whether the gateway can reach PostgreSQL."
+      },
+      "response": []
     }
   ]
 }

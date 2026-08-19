@@ -13,6 +13,10 @@ type Config interface {
 	GetDatabaseURL() string
 }
 
+type Database interface {
+	Ping(context.Context) error
+}
+
 type database struct {
 	gormDB *gorm.DB
 	sqlDB  *sql.DB
@@ -23,7 +27,7 @@ func New(cfg Config) (*database, error) {
 
 	gormDB, err := gorm.Open(postgres.Open(databaseURL))
 	if err != nil {
-		return nil, fmt.Errorf("can not create gorm db with database url: %s, %w", databaseURL, err)
+		return nil, fmt.Errorf("can not create PostgreSQL database connection: %w", err)
 	}
 
 	sqlDB, err := gormDB.DB()

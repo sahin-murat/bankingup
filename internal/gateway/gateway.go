@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/sahin-murat/bankingup/internal/config"
+	"github.com/sahin-murat/bankingup/internal/database"
 )
 
 type gateway struct {
@@ -12,7 +13,7 @@ type gateway struct {
 	serverAdress string
 }
 
-func New(cfg config.Config) (*gateway, error) {
+func New(cfg config.Config, db database.Database) (*gateway, error) {
 	serverAddress := cfg.GetServerAddress()
 
 	app := fiber.New()
@@ -22,7 +23,9 @@ func New(cfg config.Config) (*gateway, error) {
 		serverAdress: serverAddress,
 	}
 
-	gw.DefineRoutes(cfg)
+	if err := gw.DefineRoutes(db); err != nil {
+		return nil, fmt.Errorf("can not define gateway routes: %w", err)
+	}
 
 	return gw, nil
 }
