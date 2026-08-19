@@ -7,17 +7,22 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/sahin-murat/bankingup/internal/config"
-	"github.com/sahin-murat/bankingup/internal/database"
+	"gorm.io/gorm"
 )
 
 const serverReadTimeout = 10 * time.Second
+
+type database interface {
+	Ping(context.Context) error
+	GormDB() *gorm.DB
+}
 
 type gateway struct {
 	app          *fiber.App
 	serverAdress string
 }
 
-func New(cfg config.Config, db database.Database) (*gateway, error) {
+func New(cfg config.Config, db database) (*gateway, error) {
 	serverAddress := cfg.GetServerAddress()
 
 	app := fiber.New(fiber.Config{
