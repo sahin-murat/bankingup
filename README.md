@@ -25,6 +25,21 @@ and `GET /health/ready` for database readiness. PostgreSQL is exposed on port
 
 Override the default ports with `APP_PORT` and `POSTGRES_PORT`.
 
+## Database migrations
+
+Compose applies migrations before starting the gateway. Create timestamped SQL
+migrations with:
+
+```sh
+migrate create -ext sql -dir migrations -format 20060102150405 <name>
+```
+
+Apply migrations manually with:
+
+```sh
+migrate -path migrations -database "$DATABASE_URL" up
+```
+
 ## Postman
 
 The Postman collection is located at [`test/postman/bankingup.postman_collection.json`](test/postman/bankingup.postman_collection.json). It uses `http://localhost:8080` as the default `baseUrl` and includes response assertions.

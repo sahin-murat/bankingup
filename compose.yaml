@@ -6,6 +6,18 @@ services:
     environment:
       DATABASE_URL: postgres://bankingup:bankingup@postgres:5432/bankingup?sslmode=disable
     depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  migrate:
+    image: docker.io/migrate/migrate:v4.19.1
+    command:
+      - -path=/migrations
+      - -database=postgres://bankingup:bankingup@postgres:5432/bankingup?sslmode=disable
+      - up
+    volumes:
+      - ./migrations:/migrations:ro
+    depends_on:
       postgres:
         condition: service_healthy
 
