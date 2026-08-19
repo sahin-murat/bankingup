@@ -1,17 +1,27 @@
 package main
 
 import (
-	"log"
-
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/log"
+	"github.com/sahin-murat/bankingup/internal/config"
+	"github.com/sahin-murat/bankingup/internal/gateway"
 )
 
 func main() {
-	app := fiber.New()
+	cfg, err := config.New()
+	if err != nil {
+		log.Errorf("can not create config: %w", err)
+		return
+	}
 
-	app.Get("/health", func(c fiber.Ctx) error {
-		return c.SendStatus(fiber.StatusOK)
-	})
+	application, err := gateway.New(cfg)
+	if err != nil {
+		log.Errorf("can not gateway application: %w", err)
+		return
+	}
 
-	log.Fatal(app.Listen(":8080"))
+	err = application.Listen()
+	if err != nil {
+		log.Errorf("can not create config: %w", err)
+		return
+	}
 }
