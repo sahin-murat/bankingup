@@ -22,6 +22,8 @@ func New(cfg config.Config) (*gateway, error) {
 		serverAdress: serverAddress,
 	}
 
+	gw.DefineRoutes(cfg)
+
 	return gw, nil
 }
 
