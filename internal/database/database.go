@@ -49,6 +49,10 @@ func (d *database) Ping(ctx context.Context) error {
 	return nil
 }
 
+func (d *database) GormDB() *gorm.DB {
+	return d.gormDB
+}
+
 func (d *database) Close() error {
 	if err := d.sqlDB.Close(); err != nil {
 		return fmt.Errorf("can not close PostgreSQL database: %w", err)
