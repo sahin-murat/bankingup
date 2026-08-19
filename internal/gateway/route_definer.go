@@ -7,6 +7,7 @@ import (
 	currencyhandler "github.com/sahin-murat/bankingup/internal/gateway/handler/currency"
 	customerhandler "github.com/sahin-murat/bankingup/internal/gateway/handler/customer"
 	"github.com/sahin-murat/bankingup/internal/gateway/handler/health"
+	transferhandler "github.com/sahin-murat/bankingup/internal/gateway/handler/transfer"
 )
 
 func (gw *gateway) DefineRoutes(db database) error {
@@ -28,6 +29,11 @@ func (gw *gateway) DefineRoutes(db database) error {
 	err = accounthandler.RegisterAccountRoutes(gw.app, db.GormDB())
 	if err != nil {
 		return fmt.Errorf("can not register account group routes: %w", err)
+	}
+
+	err = transferhandler.RegisterTransferRoutes(gw.app, db.GormDB())
+	if err != nil {
+		return fmt.Errorf("can not register transfer group routes: %w", err)
 	}
 
 	return nil

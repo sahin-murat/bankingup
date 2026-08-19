@@ -11,12 +11,12 @@ An account transaction has:
 - `currency`: account currency at the time of the transaction
 - `balance_after`: account balance after the transaction
 - `idempotency_key`: UUID that prevents duplicate processing; client-provided
-  for API movements and system-generated for opening deposits
+  for API movements and system-generated for opening deposits and transfer
+  ledger entries
 - `created_at`: system-generated creation time
 
-Transaction type is stored as a PostgreSQL enum. `transfer` is reserved for the
-separately planned money-transfer feature and is not used by the operations in
-this document.
+Transaction type is stored as a PostgreSQL enum. Transfer behavior is defined
+in [Transfer Functional Requirements](transfer_functional_requirements.md).
 
 ## Operations
 
@@ -72,7 +72,6 @@ this document.
 
 ## Out of scope
 
-- Money transfers
 - Transaction history endpoints
 - Transaction reversal or deletion
 - Fees and interest

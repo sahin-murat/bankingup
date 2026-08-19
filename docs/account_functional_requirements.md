@@ -68,12 +68,13 @@ creation.
 - Balance cannot be changed through the account update operation.
 - Deposits and withdrawals change balances atomically as defined in
   [Account Transaction Functional Requirements](account_transaction_functional_requirements.md).
+- Transfers change two account balances atomically as defined in
+  [Transfer Functional Requirements](transfer_functional_requirements.md).
 
 ## Out of scope
 
 - Account deletion
 - Direct balance updates
-- Transfers
 - Exchange rates and currency conversion
 - Authentication and authorization
 - Pagination

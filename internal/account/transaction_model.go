@@ -23,6 +23,7 @@ type Transaction struct {
 	Currency       string          `gorm:"column:currency"`
 	BalanceAfter   decimal.Decimal `gorm:"column:balance_after;type:numeric(19,4)"`
 	IdempotencyKey uuid.UUID       `gorm:"column:idempotency_key;type:uuid"`
+	TransferID     *uuid.UUID      `gorm:"column:transfer_id;type:uuid"`
 	CreatedAt      time.Time       `gorm:"column:created_at;autoCreateTime:false;default:CURRENT_TIMESTAMP"`
 }
 
