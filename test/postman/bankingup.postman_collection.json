@@ -96,6 +96,97 @@
       ]
     },
     {
+      "name": "Currencies",
+      "item": [
+        {
+          "name": "Create Currency",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns HTTP 201 or duplicate conflict\", function () {",
+                  "    pm.expect([201, 409]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    pm.test(\"returns the created currency\", function () {",
+                  "        pm.expect(pm.response.json()).to.eql({",
+                  "            code: \"CHF\",",
+                  "            name: \"Swiss Franc\",",
+                  "            decimal_places: 2",
+                  "        });",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"CHF\",\n  \"name\": \"Swiss Franc\",\n  \"decimal_places\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/currencies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "currencies"
+              ]
+            },
+            "description": "Adds CHF when it is not already supported."
+          },
+          "response": []
+        },
+        {
+          "name": "List Currencies",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns HTTP 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"returns supported currencies\", function () {",
+                  "    const currencies = pm.response.json();",
+                  "    pm.expect(currencies).to.be.an(\"array\");",
+                  "    pm.expect(currencies.some(currency => currency.code === \"CHF\")).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/currencies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "currencies"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Customers",
       "item": [
         {

@@ -3,6 +3,7 @@ package gateway
 import (
 	"fmt"
 
+	currencyhandler "github.com/sahin-murat/bankingup/internal/gateway/handler/currency"
 	customerhandler "github.com/sahin-murat/bankingup/internal/gateway/handler/customer"
 	"github.com/sahin-murat/bankingup/internal/gateway/handler/health"
 )
@@ -16,6 +17,11 @@ func (gw *gateway) DefineRoutes(db database) error {
 	err = customerhandler.RegisterCustomerRoutes(gw.app, db.GormDB())
 	if err != nil {
 		return fmt.Errorf("can not register customer group routes: %w", err)
+	}
+
+	err = currencyhandler.RegisterCurrencyRoutes(gw.app, db.GormDB())
+	if err != nil {
+		return fmt.Errorf("can not register currency group routes: %w", err)
 	}
 
 	return nil
