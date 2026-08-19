@@ -20,6 +20,11 @@
       "key": "customerEmail",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "accountId",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -328,7 +333,215 @@
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "pm.test(\"updates the customer status\", function () {",
+                  "pm.test(\"updates the customer name\", function () {",
+                  "    pm.expect(pm.response.json().last_name).to.eql(\"Byron\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"last_name\": \"Byron\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/customers/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "customers",
+                "{{customerId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "Create Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns HTTP 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"returns the created account\", function () {",
+                  "    const account = pm.response.json();",
+                  "    pm.expect(account.customer_id).to.eql(pm.collectionVariables.get(\"customerId\"));",
+                  "    pm.expect(account.currency).to.eql(\"EUR\");",
+                  "    pm.expect(account.balance).to.eql(\"100.25\");",
+                  "    pm.expect(account.status).to.eql(\"active\");",
+                  "    pm.collectionVariables.set(\"accountId\", account.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"{{customerId}}\",\n  \"currency\": \"EUR\",\n  \"initial_balance\": \"100.25\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List All Accounts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns HTTP 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"returns an account array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Customer Accounts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns HTTP 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"returns only the customer's accounts\", function () {",
+                  "    const accounts = pm.response.json();",
+                  "    pm.expect(accounts).to.be.an(\"array\");",
+                  "    pm.expect(accounts.every(account => account.customer_id === pm.collectionVariables.get(\"customerId\"))).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts?customer_id={{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts"
+              ],
+              "query": [
+                {
+                  "key": "customer_id",
+                  "value": "{{customerId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns HTTP 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"returns the requested account\", function () {",
+                  "    pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get(\"accountId\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns HTTP 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"updates the account status\", function () {",
                   "    pm.expect(pm.response.json().status).to.eql(\"blocked\");",
                   "});"
                 ]
@@ -348,13 +561,13 @@
               "raw": "{\n  \"status\": \"blocked\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/customers/{{customerId}}",
+              "raw": "{{baseUrl}}/accounts/{{accountId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "customers",
-                "{{customerId}}"
+                "accounts",
+                "{{accountId}}"
               ]
             }
           },
