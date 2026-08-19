@@ -21,13 +21,14 @@ var (
 	ErrCustomerNotFound = errors.New("account customer not found")
 	ErrCurrencyNotFound = errors.New("account currency not found")
 	ErrInvalidBalance   = errors.New("account balance is invalid")
+	ErrConcurrentUpdate = errors.New("account changed during update")
 )
 
 type Repository interface {
-	Create(context.Context, Account) (*Account, error)
+	Create(context.Context, Account, *Transaction) (*Account, error)
 	GetByID(context.Context, uuid.UUID) (*Account, error)
 	List(context.Context, *uuid.UUID) ([]Account, error)
-	UpdateStatus(context.Context, uuid.UUID, Status) (*Account, error)
+	UpdateStatus(context.Context, uuid.UUID, Status, Status, bool) (*Account, error)
 }
 
 type repository struct {
@@ -42,10 +43,32 @@ func NewRepository(db *gorm.DB) (*repository, error) {
 	return &repository{db: db}, nil
 }
 
-func (r *repository) Create(ctx context.Context, input Account) (*Account, error) {
+func (r *repository) Create(
+	ctx context.Context,
+	input Account,
+	openingTransaction *Transaction,
+) (*Account, error) {
 	created := input
 
-	if err := r.db.WithContext(ctx).Create(&created).Error; err != nil {
+	create := func(db *gorm.DB) error {
+		if err := db.Create(&created).Error; err != nil {
+			return err
+		}
+		if openingTransaction == nil {
+			return nil
+		}
+
+		openingTransaction.AccountID = created.ID
+		return db.Create(openingTransaction).Error
+	}
+
+	var err error
+	if openingTransaction == nil {
+		err = create(r.db.WithContext(ctx))
+	} else {
+		err = r.db.WithContext(ctx).Transaction(create)
+	}
+	if err != nil {
 		return nil, repositoryError("create account", err)
 	}
 
@@ -76,12 +99,23 @@ func (r *repository) List(ctx context.Context, customerID *uuid.UUID) ([]Account
 	return accounts, nil
 }
 
-func (r *repository) UpdateStatus(ctx context.Context, id uuid.UUID, status Status) (*Account, error) {
-	result := r.db.WithContext(ctx).
+func (r *repository) UpdateStatus(
+	ctx context.Context,
+	id uuid.UUID,
+	currentStatus Status,
+	newStatus Status,
+	requireZeroBalance bool,
+) (*Account, error) {
+	query := r.db.WithContext(ctx).
 		Model(&Account{}).
-		Where("id = ?", id).
+		Where("id = ? AND status = ?", id, currentStatus)
+	if requireZeroBalance {
+		query = query.Where("balance = 0")
+	}
+
+	result := query.
 		Updates(map[string]any{
-			"status":     status,
+			"status":     newStatus,
 			"updated_at": gorm.Expr("CURRENT_TIMESTAMP"),
 		})
 
@@ -89,7 +123,7 @@ func (r *repository) UpdateStatus(ctx context.Context, id uuid.UUID, status Stat
 		return nil, repositoryError("update account status", result.Error)
 	}
 	if result.RowsAffected == 0 {
-		return nil, fmt.Errorf("update account status: %w", ErrNotFound)
+		return nil, fmt.Errorf("update account status: %w", ErrConcurrentUpdate)
 	}
 
 	return r.GetByID(ctx, id)

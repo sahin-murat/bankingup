@@ -36,6 +36,16 @@ func RegisterAccountRoutes(app *fiber.App, db *gorm.DB) error {
 		return fmt.Errorf("can not create account service: %w", err)
 	}
 
+	transactionRepository, err := accountdomain.NewTransactionRepository(db)
+	if err != nil {
+		return fmt.Errorf("can not create account transaction repository: %w", err)
+	}
+
+	transactionService, err := accountdomain.NewTransactionService(transactionRepository, currencyService)
+	if err != nil {
+		return fmt.Errorf("can not create account transaction service: %w", err)
+	}
+
 	createHandler, err := NewCreateAccountHandler(service)
 	if err != nil {
 		return fmt.Errorf("can not create create account handler: %w", err)
@@ -56,11 +66,23 @@ func RegisterAccountRoutes(app *fiber.App, db *gorm.DB) error {
 		return fmt.Errorf("can not create update account handler: %w", err)
 	}
 
+	depositHandler, err := NewDepositAccountHandler(transactionService)
+	if err != nil {
+		return fmt.Errorf("can not create deposit account handler: %w", err)
+	}
+
+	withdrawHandler, err := NewWithdrawAccountHandler(transactionService)
+	if err != nil {
+		return fmt.Errorf("can not create withdraw account handler: %w", err)
+	}
+
 	accounts := app.Group("/accounts")
 	accounts.Post("", createHandler.Handle)
 	accounts.Get("", listHandler.Handle)
 	accounts.Get("/:account_id", getHandler.Handle)
 	accounts.Patch("/:account_id", updateHandler.Handle)
+	accounts.Post("/:account_id/deposits", depositHandler.Handle)
+	accounts.Post("/:account_id/withdrawals", withdrawHandler.Handle)
 
 	return nil
 }

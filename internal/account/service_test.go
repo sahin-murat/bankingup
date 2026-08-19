@@ -12,14 +12,14 @@ import (
 )
 
 type fakeRepository struct {
-	create       func(context.Context, Account) (*Account, error)
+	create       func(context.Context, Account, *Transaction) (*Account, error)
 	getByID      func(context.Context, uuid.UUID) (*Account, error)
 	list         func(context.Context, *uuid.UUID) ([]Account, error)
-	updateStatus func(context.Context, uuid.UUID, Status) (*Account, error)
+	updateStatus func(context.Context, uuid.UUID, Status, Status, bool) (*Account, error)
 }
 
-func (r fakeRepository) Create(ctx context.Context, input Account) (*Account, error) {
-	return r.create(ctx, input)
+func (r fakeRepository) Create(ctx context.Context, input Account, transaction *Transaction) (*Account, error) {
+	return r.create(ctx, input, transaction)
 }
 
 func (r fakeRepository) GetByID(ctx context.Context, id uuid.UUID) (*Account, error) {
@@ -30,8 +30,14 @@ func (r fakeRepository) List(ctx context.Context, customerID *uuid.UUID) ([]Acco
 	return r.list(ctx, customerID)
 }
 
-func (r fakeRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status Status) (*Account, error) {
-	return r.updateStatus(ctx, id, status)
+func (r fakeRepository) UpdateStatus(
+	ctx context.Context,
+	id uuid.UUID,
+	currentStatus Status,
+	newStatus Status,
+	requireZeroBalance bool,
+) (*Account, error) {
+	return r.updateStatus(ctx, id, currentStatus, newStatus, requireZeroBalance)
 }
 
 type customerGetterFunc func(context.Context, uuid.UUID) (*customerdomain.Customer, error)
@@ -106,9 +112,17 @@ func TestServiceCreate(t *testing.T) {
 	}
 
 	repository := fakeRepository{
-		create: func(_ context.Context, input Account) (*Account, error) {
+		create: func(_ context.Context, input Account, transaction *Transaction) (*Account, error) {
 			if !accountsEqual(input, want) {
 				t.Errorf("Create() input = %+v, want %+v", input, want)
+			}
+			if transaction == nil ||
+				transaction.Type != TransactionTypeDeposit ||
+				!transaction.Amount.Equal(balance) ||
+				transaction.Currency != "EUR" ||
+				!transaction.BalanceAfter.Equal(balance) ||
+				transaction.IdempotencyKey == uuid.Nil {
+				t.Errorf("Create() opening transaction = %+v, want deposit for %s", transaction, balance)
 			}
 			return &input, nil
 		},
@@ -219,9 +233,27 @@ func TestServiceUpdateStatus(t *testing.T) {
 		getByID: func(context.Context, uuid.UUID) (*Account, error) {
 			return &existing, nil
 		},
-		updateStatus: func(_ context.Context, requestedID uuid.UUID, status Status) (*Account, error) {
-			if requestedID != id || status != StatusClosed {
-				t.Errorf("UpdateStatus() = (%v, %s), want (%v, %s)", requestedID, status, id, StatusClosed)
+		updateStatus: func(
+			_ context.Context,
+			requestedID uuid.UUID,
+			currentStatus Status,
+			newStatus Status,
+			requireZeroBalance bool,
+		) (*Account, error) {
+			if requestedID != id ||
+				currentStatus != StatusActive ||
+				newStatus != StatusClosed ||
+				!requireZeroBalance {
+				t.Errorf(
+					"UpdateStatus() = (%v, %s, %s, %t), want (%v, %s, %s, true)",
+					requestedID,
+					currentStatus,
+					newStatus,
+					requireZeroBalance,
+					id,
+					StatusActive,
+					StatusClosed,
+				)
 			}
 			return &want, nil
 		},

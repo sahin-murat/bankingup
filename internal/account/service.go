@@ -107,12 +107,25 @@ func (s *service) Create(ctx context.Context, input CreateInput) (*Account, erro
 		return nil, err
 	}
 
-	return s.repository.Create(ctx, Account{
+	account := Account{
 		CustomerID: input.CustomerID,
 		Currency:   currency.Code,
 		Balance:    input.InitialBalance,
 		Status:     StatusActive,
-	})
+	}
+
+	var openingTransaction *Transaction
+	if !input.InitialBalance.IsZero() {
+		openingTransaction = &Transaction{
+			Type:           TransactionTypeDeposit,
+			Amount:         input.InitialBalance,
+			Currency:       currency.Code,
+			BalanceAfter:   input.InitialBalance,
+			IdempotencyKey: uuid.New(),
+		}
+	}
+
+	return s.repository.Create(ctx, account, openingTransaction)
 }
 
 func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*Account, error) {
@@ -155,7 +168,13 @@ func (s *service) UpdateStatus(ctx context.Context, input UpdateStatusInput) (*A
 		return nil, ErrNonZeroBalance
 	}
 
-	return s.repository.UpdateStatus(ctx, input.ID, input.Status)
+	return s.repository.UpdateStatus(
+		ctx,
+		input.ID,
+		existing.Status,
+		input.Status,
+		input.Status == StatusClosed,
+	)
 }
 
 func validateBalance(balance decimal.Decimal, decimalPlaces int16) error {

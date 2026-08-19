@@ -23,6 +23,7 @@ creation.
 
 - Requires `customer_id` and `currency`.
 - Accepts an optional `initial_balance` that defaults to zero.
+- Records a non-zero initial balance as a deposit transaction.
 - Allows account creation only for an `active` customer.
 - Returns `400 Bad Request` for an unsupported currency, invalid precision, or a
   negative initial balance.
@@ -65,13 +66,14 @@ creation.
 - Amounts use decimal strings in JSON and must follow the currency's allowed
   decimal places.
 - Balance cannot be changed through the account update operation.
-- Future money-movement operations will change balances atomically.
+- Deposits and withdrawals change balances atomically as defined in
+  [Account Transaction Functional Requirements](account_transaction_functional_requirements.md).
 
 ## Out of scope
 
 - Account deletion
 - Direct balance updates
-- Deposits, withdrawals, and transfers
+- Transfers
 - Exchange rates and currency conversion
 - Authentication and authorization
 - Pagination

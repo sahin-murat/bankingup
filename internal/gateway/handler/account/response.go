@@ -19,6 +19,16 @@ type accountResponse struct {
 	UpdatedAt  time.Time            `json:"updated_at"`
 }
 
+type transactionResponse struct {
+	ID           string                        `json:"id"`
+	AccountID    string                        `json:"account_id"`
+	Type         accountdomain.TransactionType `json:"type"`
+	Amount       string                        `json:"amount"`
+	Currency     string                        `json:"currency"`
+	BalanceAfter string                        `json:"balance_after"`
+	CreatedAt    time.Time                     `json:"created_at"`
+}
+
 type errorResponse struct {
 	Error string `json:"error"`
 }
@@ -35,6 +45,18 @@ func newAccountResponse(input accountdomain.Account) accountResponse {
 	}
 }
 
+func newTransactionResponse(input accountdomain.Transaction) transactionResponse {
+	return transactionResponse{
+		ID:           input.ID.String(),
+		AccountID:    input.AccountID.String(),
+		Type:         input.Type,
+		Amount:       input.Amount.String(),
+		Currency:     input.Currency,
+		BalanceAfter: input.BalanceAfter.String(),
+		CreatedAt:    input.CreatedAt,
+	}
+}
+
 func writeAccountError(requestCtx fiber.Ctx, err error) error {
 	switch {
 	case errors.Is(err, accountdomain.ErrInvalidInput),
@@ -42,12 +64,17 @@ func writeAccountError(requestCtx fiber.Ctx, err error) error {
 		errors.Is(err, accountdomain.ErrCurrencyNotFound),
 		errors.Is(err, accountdomain.ErrUnsupportedCurrency),
 		errors.Is(err, accountdomain.ErrInvalidStatusTransition),
-		errors.Is(err, accountdomain.ErrNonZeroBalance):
+		errors.Is(err, accountdomain.ErrNonZeroBalance),
+		errors.Is(err, accountdomain.ErrInvalidAmount):
 		return requestCtx.Status(fiber.StatusBadRequest).JSON(errorResponse{Error: err.Error()})
 	case errors.Is(err, accountdomain.ErrNotFound),
 		errors.Is(err, accountdomain.ErrCustomerNotFound):
 		return requestCtx.Status(fiber.StatusNotFound).JSON(errorResponse{Error: err.Error()})
-	case errors.Is(err, accountdomain.ErrCustomerNotActive):
+	case errors.Is(err, accountdomain.ErrCustomerNotActive),
+		errors.Is(err, accountdomain.ErrAccountStatus),
+		errors.Is(err, accountdomain.ErrInsufficientFunds),
+		errors.Is(err, accountdomain.ErrIdempotencyConflict),
+		errors.Is(err, accountdomain.ErrConcurrentUpdate):
 		return requestCtx.Status(fiber.StatusConflict).JSON(errorResponse{Error: err.Error()})
 	default:
 		log.Errorf("account request failed: %v", err)

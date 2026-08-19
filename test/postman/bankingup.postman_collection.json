@@ -25,6 +25,21 @@
       "key": "accountId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "depositIdempotencyKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "depositTransactionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "withdrawalIdempotencyKey",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -524,6 +539,182 @@
               "path": [
                 "accounts",
                 "{{accountId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deposit",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"depositIdempotencyKey\", pm.variables.replaceIn(\"{{$guid}}\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns HTTP 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"deposits money into the account\", function () {",
+                  "    const transaction = pm.response.json();",
+                  "    pm.expect(transaction.account_id).to.eql(pm.collectionVariables.get(\"accountId\"));",
+                  "    pm.expect(transaction.type).to.eql(\"deposit\");",
+                  "    pm.expect(transaction.amount).to.eql(\"25.5\");",
+                  "    pm.expect(transaction.balance_after).to.eql(\"125.75\");",
+                  "    pm.collectionVariables.set(\"depositTransactionId\", transaction.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{depositIdempotencyKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"25.50\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/deposits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "deposits"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Replay Deposit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns HTTP 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"returns the original transaction\", function () {",
+                  "    const transaction = pm.response.json();",
+                  "    pm.expect(transaction.id).to.eql(pm.collectionVariables.get(\"depositTransactionId\"));",
+                  "    pm.expect(transaction.balance_after).to.eql(\"125.75\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{depositIdempotencyKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"25.50\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/deposits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "deposits"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Withdraw",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"withdrawalIdempotencyKey\", pm.variables.replaceIn(\"{{$guid}}\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns HTTP 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"withdraws money from the account\", function () {",
+                  "    const transaction = pm.response.json();",
+                  "    pm.expect(transaction.account_id).to.eql(pm.collectionVariables.get(\"accountId\"));",
+                  "    pm.expect(transaction.type).to.eql(\"withdrawal\");",
+                  "    pm.expect(transaction.amount).to.eql(\"10\");",
+                  "    pm.expect(transaction.balance_after).to.eql(\"115.75\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{withdrawalIdempotencyKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"10.00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/withdrawals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "withdrawals"
               ]
             }
           },
