@@ -18,3 +18,7 @@ As an alternative to Docker, build and run the same container with Podman:
 podman build -t banking-up .
 podman run --rm -p 8080:8080 banking-up
 ```
+
+## Postman
+
+The Postman collection is located at [`test/postman/bankingup.postman_collection.json`](test/postman/bankingup.postman_collection.json). It uses `http://localhost:8080` as the default `baseUrl` and includes response assertions.
